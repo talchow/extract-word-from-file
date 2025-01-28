@@ -6,6 +6,7 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 use xlsxwriter::Workbook;
+use regex::Regex;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
@@ -28,11 +29,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn count_words(file_path: &str) -> Result<HashMap<String, u32>, std::io::Error> {
     let data = fs::read(file_path)?;
-    let mut word_count = HashMap::new();
-    let lines = String::from_utf8(data).unwrap();
-    // let line_convert = lines.split(" ")
-    for line in lines.chars().filter(|c|c.is_ascii_alphabetic()) {
-        *word_count.entry(line.to_string()).or_insert(0) += 1;
+    let re = Regex::new(r"\b[a-zA-Z]+\b").expect("failed to create regex");
+    let words = re.find_iter(&String::from_utf8(data).unwrap()).map(|m| m.as_str().to_string()).collect::<Vec<String>>();
+    let mut word_count: HashMap<String, u32> = HashMap::new();
+    for word in words {
+        *word_count.entry(word.as_str().to_string()).or_insert(0) += 1;
     }
     Ok(word_count)
 }
